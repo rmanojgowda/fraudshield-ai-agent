@@ -28,8 +28,19 @@ class AlertAgent:
         card_id    = transaction.get("card_id", "unknown")[:8]
         country    = transaction.get("country", "IN")
 
+        # Determine severity level
+        if risk_score >= 0.85:
+            severity = "CRITICAL"
+        elif risk_score >= 0.60:
+            severity = "HIGH"
+        elif risk_score >= 0.35:
+            severity = "MEDIUM"
+        else:
+            severity = "LOW"
+
         alert_record = {
             "timestamp":      datetime.utcnow().isoformat(),
+            "severity":       severity,
             "alert_id":       f"FSA-{int(time.time()*1000)}",
             "decision":       decision,
             "risk_score":     risk_score,
@@ -47,8 +58,12 @@ class AlertAgent:
 
         # Send Slack if configured
         slack_sent = False
-        if self.slack_enabled and decision in ["BLOCK", "STEP_UP_AUTH"]:
-            slack_sent = self._send_slack(alert_record)
+        # Alert based on severity
+        if self.slack_enabled:
+            if severity in ["CRITICAL", "HIGH"] and decision == "BLOCK":
+                slack_sent = self._send_slack(alert_record)
+            elif severity == "MEDIUM" and decision == "STEP_UP_AUTH":
+                slack_sent = self._send_slack(alert_record)
 
         return {
             "alert_id":    alert_record["alert_id"],
