@@ -64,7 +64,6 @@ def _parse_transaction(text: str) -> dict:
 
 
 def _format_report(report: dict) -> str:
-    """Format investigation report as markdown string."""
     if report.get("status") == "error":
         return (f"❌ **Error:** {report.get('message','Unknown error')}\n\n"
                 f"💡 {report.get('hint','Make sure fraud API is running on port 8000')}")
