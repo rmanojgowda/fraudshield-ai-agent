@@ -141,7 +141,7 @@ Be specific, professional, and actionable."""
         p3 = "Recommended actions:\n" + "\n".join(
             f"• {a}" for a in actions[:4])
 
-        full_explanation = f"{p1}\n\n{p2}\n\n{p3}"
+        full_explanation = f"{p1}\n\n{p2}"
 
         return {
             "explanation":    full_explanation,
