@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ── Fraud Detection API ───────────────────────────────────────
-FRAUD_API_URL = os.getenv("FRAUD_API_URL", "http://127.0.0.1:8000")
+FRAUD_API_URL = os.getenv("FRAUD_API_URL", "demo")
 
 # ── Azure OpenAI (add tomorrow after Azure signup) ────────────
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
