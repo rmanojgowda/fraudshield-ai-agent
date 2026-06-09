@@ -135,20 +135,56 @@ class InvestigationAgent:
             }
         }
 
-    def _identify_attack_pattern(self, ml, graph, geo, graph_sigs,
-                                   geo_sigs, tx):
+    def _identify_attack_pattern(self, ml, graph, geo,
+                               graph_sigs, geo_sigs, tx):
+        amount       = tx.get("amount", 100)
+        hour         = tx.get("hour", 12)
+        tx_1min      = tx.get("tx_count_1min", 1)
+        v14          = tx.get("v14", 0.0)
+        country      = tx.get("country", "IN")
+        ip           = tx.get("ip", "")
+
+        # Dark web stolen card (extreme V14)
+        if v14 < -7.0 and ml > 0.6:
+            return "DARK_WEB_STOLEN_CARD"
+
+        # Coordinated fraud ring
         if graph > 0.5 and "ring" in str(graph_sigs).lower():
             return "COORDINATED_FRAUD_RING"
-        if geo > 0.4 and "VPN" in str(geo_sigs):
+
+        # Card testing (tiny amounts, high velocity)
+        if amount < 5.0 and tx_1min >= 3:
+            return "CARD_TESTING_MICRO"
+
+        # ATM fraud (round amounts, night)
+        if amount % 100 == 0 and hour < 5 and amount >= 100:
+            return "ATM_FRAUD_PATTERN"
+
+        # VPN masked attack
+        if geo > 0.4 and ip.startswith("10."):
             return "VPN_MASKED_ATTACK"
-        if geo > 0.3 and ("RO" in str(geo_sigs) or "RU" in str(geo_sigs)):
-            return "HIGH_RISK_COUNTRY"
+
+        # Account takeover (high amount + new pattern + night)
+        if amount > 1000 and hour < 6 and ml > 0.4:
+            return "ACCOUNT_TAKEOVER"
+
+        # High risk country
+        if geo > 0.3 and country in [
+                "RO","RU","NG","PK","UA","BY"]:
+            return "HIGH_RISK_COUNTRY_FRAUD"
+
+        # Impossible travel
         if geo > 0.4 and "IMPOSSIBLE" in str(geo_sigs):
             return "IMPOSSIBLE_TRAVEL"
-        if tx.get("tx_count_1min", 0) >= 4:
+
+        # Burst attack
+        if tx_1min >= 4:
             return "CARD_TESTING_BURST"
+
+        # ML flagged
         if ml > 0.7:
-            return "ML_FLAGGED_PATTERN"
+            return "ML_FLAGGED_ANOMALY"
+
         return "SUSPICIOUS_TRANSACTION"
 
     def _get_primary_driver(self, ml, graph, geo):
