@@ -62,7 +62,8 @@ def _parse_transaction(text: str) -> dict:
             elif key in ["hour", "tx_count_1min"]:
                 tx[key] = int(val)
             else:
-                tx[key] = val
+                # Uppercase country codes
+                tx[key] = val.upper() if key == "country" else val
     return tx if tx else None
 
 
@@ -97,7 +98,6 @@ def _format_report(report: dict) -> str:
         f"---\n\n"
         f"{expl}\n\n"
         f"---\n\n"
-        f"**Recommended Actions:**\n{actions_text}\n\n"
         f"*Case: {report.get('case_id','?')} | "
         f"Latency: {report.get('latency_ms','?')}ms | "
         f"Agents: {len(report.get('agents_used', []))}*"
