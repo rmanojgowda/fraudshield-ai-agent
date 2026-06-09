@@ -47,8 +47,11 @@ def _parse_transaction(text: str) -> dict:
         "card_id":       r'card[_-]?id[=:]\s*(\S+)',
         "country":       r'country[=:]\s*([A-Za-z]{2})',
         "v14":           r'v14[=:]\s*([-\d.]+)',
-        "tx_count_1min": r'tx[_-]?1min[=:]\s*(\d+)',
-        "ip":            r'ip[=:]\s*([\d.]+)',
+        "v12":           r'v12[=:]\s*([-\d.]+)',
+        "v10":           r'v10[=:]\s*([-\d.]+)',
+        "tx_count_1min": r'tx[_-]?(?:count[_-]?)?1min[=:]\s*(\d+)',
+        "ip":            r'ip[=:]\s*([\d]+\.[\d]+\.[\d]+\.[\d]+)',
+        "merchant_id":   r'merchant[_-]?id[=:]\s*(\S+)',
     }
     for key, pattern in patterns.items():
         match = re.search(pattern, text.lower())
