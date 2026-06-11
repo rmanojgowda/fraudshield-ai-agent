@@ -57,7 +57,7 @@ def _parse_transaction(text: str) -> dict:
         match = re.search(pattern, text.lower())
         if match:
             val = match.group(1)
-            if key in ["amount", "v14"]:
+            if key in ["amount", "v14", "v12", "v10"]:
                 tx[key] = float(val)
             elif key in ["hour", "tx_count_1min"]:
                 tx[key] = int(val)

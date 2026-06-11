@@ -1,12 +1,12 @@
 """
 Explanation Agent — "Explain this to a human"
 Generates plain English fraud reports.
-Uses Azure OpenAI GPT-4o when available, mock otherwise.
+Uses Azure DeepSeek via Microsoft Foundry when available,
+rule-based fallback otherwise.
 """
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from config import AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY
-from config import AZURE_OPENAI_MODEL, USE_MOCK_GPT
+from config import AZURE_OPENAI_API_KEY, AZURE_OPENAI_MODEL, USE_MOCK_GPT
 
 
 class ExplanationAgent:
@@ -17,11 +17,10 @@ class ExplanationAgent:
 
         if self.use_azure:
             try:
-                from openai import AzureOpenAI
-                self.client = AzureOpenAI(
-                    azure_endpoint = AZURE_OPENAI_ENDPOINT,
-                    api_key        = AZURE_OPENAI_API_KEY,
-                    api_version    = "2024-02-01"
+                from openai import OpenAI
+                self.client = OpenAI(
+                    base_url="https://fraudshield-deepseek-resource.services.ai.azure.com/openai/v1",
+                    api_key=AZURE_OPENAI_API_KEY,
                 )
                 print("✅ Explanation Agent: Azure OpenAI connected")
             except Exception as e:
@@ -38,9 +37,9 @@ class ExplanationAgent:
 
     def _explain_with_gpt(self, investigation: dict,
                            transaction: dict) -> dict:
-        """Use Azure OpenAI GPT-4o for explanation."""
+        """Use Azure DeepSeek via Microsoft Foundry."""
         signals_text = "\n".join([
-            f"- {s['type']}: {s['details']}"
+            f"- {s['type']}: {s.get('details', s.get('meaning', ''))}"
             for s in investigation.get("signals", [])
         ])
 
@@ -50,7 +49,7 @@ Transaction:
 - Amount: ₹{transaction.get('amount', 0):.2f}
 - Time: {transaction.get('hour', 0):02d}:00
 - Location: {transaction.get('country', 'Unknown')}
-- Card: {transaction.get('card_id', 'unknown')[:8]}...
+- Card: {str(transaction.get('card_id', 'unknown'))[:8]}...
 
 Decision: {investigation['decision']} (Risk: {investigation['risk_score']:.0%})
 Attack Pattern: {investigation['attack_pattern']}
@@ -63,37 +62,36 @@ Write a clear 3-paragraph explanation for a bank fraud analyst:
 2. Why it was flagged (key signals in plain English)
 3. What should be done next (recommended actions)
 
-Be specific, professional, and actionable."""
+Be specific, professional, and actionable. Keep it under 200 words."""
 
         try:
             response = self.client.chat.completions.create(
-                model    = AZURE_OPENAI_MODEL,
-                messages = [{"role": "user", "content": prompt}],
-                max_tokens = 400
+                model=AZURE_OPENAI_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=400
             )
             explanation = response.choices[0].message.content
             return {
                 "explanation": explanation,
-                "source":      "azure_gpt4o",
+                "source":      "azure_deepseek",
                 "model":       AZURE_OPENAI_MODEL,
             }
         except Exception as e:
+            print(f"⚠️  Azure error: {e}")
             return self._explain_with_mock(investigation, transaction)
 
     def _explain_with_mock(self, investigation: dict,
                             transaction: dict) -> dict:
         """Rule-based explanation (no Azure needed)."""
-        decision    = investigation["decision"]
-        risk_score  = investigation["risk_score"]
-        pattern     = investigation["attack_pattern"]
-        signals     = investigation.get("signals", [])
-        actions     = investigation.get("recommended_actions", [])
-        amount      = transaction.get("amount", 0)
-        hour        = transaction.get("hour", 12)
-        country     = transaction.get("country", "IN")
-        card_id     = transaction.get("card_id", "unknown")[:8]
+        decision   = investigation["decision"]
+        risk_score = investigation["risk_score"]
+        pattern    = investigation["attack_pattern"]
+        signals    = investigation.get("signals", [])
+        amount     = transaction.get("amount", 0)
+        hour       = transaction.get("hour", 12)
+        country    = transaction.get("country", "IN")
+        card_id    = str(transaction.get("card_id", "unknown"))[:8]
 
-        # Paragraph 1: What happened
         if decision == "BLOCK":
             p1 = (f"🚨 TRANSACTION BLOCKED — Risk Score: {risk_score:.0%}\n"
                   f"A ₹{amount:.2f} transaction on card {card_id}... at "
@@ -109,7 +107,6 @@ Be specific, professional, and actionable."""
                   f"A ₹{amount:.2f} transaction on card {card_id}... has been "
                   f"approved. No significant fraud signals detected.")
 
-        # Paragraph 2: Why
         reasons = []
         for sig in signals:
             stype = sig["type"]
@@ -131,20 +128,16 @@ Be specific, professional, and actionable."""
                     f"Transaction occurred at {hour:02d}:00 — fraud peaks "
                     f"between 2-4am when cardholders are typically asleep")
             elif stype == "VELOCITY_SIGNAL":
-                reasons.append(sig["details"][0])
+                details = sig.get("details", [])
+                if details:
+                    reasons.append(details[0])
 
         p2 = "Why flagged:\n" + "\n".join(
             f"• {r}" for r in reasons) if reasons else \
              "No significant fraud signals detected."
 
-        # Paragraph 3: Actions
-        p3 = "Recommended actions:\n" + "\n".join(
-            f"• {a}" for a in actions[:4])
-
-        full_explanation = f"{p1}\n\n{p2}"
-
         return {
-            "explanation":    full_explanation,
+            "explanation":    f"{p1}\n\n{p2}",
             "source":         "rule_based",
             "decision":       decision,
             "risk_score":     risk_score,
@@ -152,6 +145,8 @@ Be specific, professional, and actionable."""
         }
 
     def get_stats(self) -> dict:
-        return {"agent": self.name,
-                "total_explanations": self.total_explanations,
-                "backend": "azure_gpt4o" if self.use_azure else "rule_based"}
+        return {
+            "agent":               self.name,
+            "total_explanations":  self.total_explanations,
+            "backend": "azure_deepseek" if self.use_azure else "rule_based"
+        }
