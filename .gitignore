@@ -7,3 +7,7 @@ logs/
 venv/
 fraud_core/
 static/
+
+architecture_files/
+GitHubCopilot/
+*.zip
