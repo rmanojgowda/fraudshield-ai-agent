@@ -124,6 +124,7 @@ Every decision is logged in the **Reasoning Trail** visible in the UI.
 
 ## 🏗️ Architecture
 
+![Architecture](images/fraudshield_architecture.png)
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                  Streamlit Interface                        │
