@@ -91,6 +91,17 @@ def _format_report(report: dict) -> str:
     actions_text = "\n".join(f"• {a}" for a in actions[:4]) \
                    if actions else "No actions required"
 
+    # Reasoning trail
+    reasoning = report.get("reasoning_log", [])
+    reasoning_text = ""
+    if reasoning:
+        reasoning_text = "\n\n**🧠 Agent Reasoning Trail:**\n" + \
+            "\n".join(f"→ {r}" for r in reasoning)
+
+    # Agents used
+    agents = report.get("agents_used", [])
+    agents_text = " → ".join(agents) if agents else "?"
+
     return (
         f"### {badge}\n"
         f"**Risk Score:** {risk:.0%} | **Pattern:** `{pattern}`\n\n"
@@ -98,9 +109,10 @@ def _format_report(report: dict) -> str:
         f"---\n\n"
         f"{expl}\n\n"
         f"---\n\n"
+        f"{reasoning_text}\n\n"
         f"*Case: {report.get('case_id','?')} | "
         f"Latency: {report.get('latency_ms','?')}ms | "
-        f"Agents: {len(report.get('agents_used', []))}*"
+        f"Agents: {agents_text}*"
     )
 
 
