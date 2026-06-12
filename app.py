@@ -384,8 +384,9 @@ with tab2:
         merchant   = st.text_input("Merchant ID", "merchant_X")
         ip         = st.text_input("IP Address", "10.8.0.1")
         tx_1min    = st.number_input("Tx in last 1 min", 1, 50, 5)
-        v14        = st.slider("V14 (fraud signal)", -10.0, 5.0, -5.23,
-                               help="More negative = higher fraud risk")
+        v14 = st.slider("V14 (fraud signal)", -10.0, 5.0, -5.23,
+                         help="More negative = higher fraud risk")
+        v12 = st.slider("V12 (secondary signal)", -10.0, 5.0, 0.0)
 
     st.markdown("---")
     if st.button("🔍 Run Full 4-Agent Investigation",
@@ -394,7 +395,8 @@ with tab2:
             "amount": amount, "hour": hour,
             "card_id": card_id, "merchant_id": merchant,
             "ip": ip, "country": country,
-            "v14": v14, "tx_count_1min": tx_1min
+            "v14": v14, "v12": v12,
+            "tx_count_1min": tx_1min
         }
         with st.spinner("Running Detection → Investigation → "
                         "Explanation → Alert agents..."):
