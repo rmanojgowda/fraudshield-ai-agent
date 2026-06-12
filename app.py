@@ -252,6 +252,8 @@ with st.sidebar:
                               use_container_width=True)
     testing_btn  = st.button("🔢 Card Testing Burst",
                               use_container_width=True)
+    travel_btn = st.button("✈️ Impossible Travel",
+                            use_container_width=True)
 
     if fraud_btn:
         st.session_state["quick_tx"] = {
@@ -288,6 +290,14 @@ with st.sidebar:
             "card_id": "card_test_burst",
             "country": "NG", "ip": "10.22.0.1",
             "v14": -3.5, "tx_count_1min": 12
+        }
+    if travel_btn:
+        st.session_state["quick_tx"] = {
+            "amount": 899.99, "hour": 1,
+            "card_id": "card_travel_001",
+            "country": "CN", "ip": "10.33.0.1",
+            "v14": -4.8, "v12": -2.9,
+            "tx_count_1min": 2
         }
 
     st.divider()
@@ -397,17 +407,50 @@ with tab3:
 
     stats = orchestrator.get_system_stats()
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Cases",
-              stats["orchestrator"]["total_cases"])
-    c2.metric("Fraud Detected",
-              stats["detection"]["fraud_found"])
-    c3.metric("Fraud Rate",
-              f"{stats['detection']['fraud_rate_pct']:.1f}%")
-    c4.metric("Alerts Sent",
-              stats["alert"]["total_alerts"])
+    c1.metric("Total Cases",    stats["orchestrator"]["total_cases"])
+    c2.metric("Fraud Detected", stats["detection"]["fraud_found"])
+    c3.metric("Fraud Rate",     f"{stats['detection']['fraud_rate_pct']:.1f}%")
+    c4.metric("Alerts Sent",    stats["alert"]["total_alerts"])
 
     st.divider()
-    st.markdown("### Recent Alerts")
+
+    # ── Charts ────────────────────────────────────────────────
+    import pandas as pd
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**🎯 Attack Patterns Detected**")
+        alerts = orchestrator.alert.get_recent_alerts(limit=50)
+        if alerts:
+            patterns = {}
+            for a in alerts:
+                p = a.get("attack_pattern", "UNKNOWN")
+                patterns[p] = patterns.get(p, 0) + 1
+            df = pd.DataFrame(
+                list(patterns.items()),
+                columns=["Pattern", "Count"]
+            ).sort_values("Count", ascending=False)
+            st.bar_chart(df.set_index("Pattern"))
+        else:
+            st.info("Run some transactions to see patterns!")
+
+    with col2:
+        st.markdown("**🌍 Geographic Risk Distribution**")
+        if alerts:
+            countries = {}
+            for a in alerts:
+                c = a.get("country", "?")
+                countries[c] = countries.get(c, 0) + 1
+            df2 = pd.DataFrame(
+                list(countries.items()),
+                columns=["Country", "Count"]
+            ).sort_values("Count", ascending=False)
+            st.bar_chart(df2.set_index("Country"))
+        else:
+            st.info("Run some transactions to see geo data!")
+
+    st.divider()
+    st.markdown("### 🔔 Recent Alerts")
     alerts = orchestrator.alert.get_recent_alerts(limit=10)
     if alerts:
         for a in alerts:
@@ -427,7 +470,7 @@ with tab3:
                 unsafe_allow_html=True
             )
     else:
-        st.info("No alerts yet — run some transactions to see alerts here!")
+        st.info("No alerts yet — run some transactions!")
 
     st.divider()
     st.markdown("### 🏆 About FraudShield AI")
@@ -459,4 +502,3 @@ with tab3:
 3. 🕸️ **Graph Detection** — fraud rings across workers (Redis-backed)
 4. 🌍 **Geographic Risk** — country + VPN + impossible travel
     """)
-# redeploy trigger v2
