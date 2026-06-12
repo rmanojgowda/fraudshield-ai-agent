@@ -246,8 +246,12 @@ with st.sidebar:
                             use_container_width=True)
     normal_btn = st.button("✅ Normal Transaction",
                             use_container_width=True)
-    ring_btn   = st.button("🕸️ Fraud Ring Attack",
-                            use_container_width=True)
+    ring_btn     = st.button("🕸️ Fraud Ring Attack",
+                              use_container_width=True)
+    darkweb_btn  = st.button("🌑 Dark Web Card",
+                              use_container_width=True)
+    testing_btn  = st.button("🔢 Card Testing Burst",
+                              use_container_width=True)
 
     if fraud_btn:
         st.session_state["quick_tx"] = {
@@ -268,6 +272,22 @@ with st.sidebar:
             "merchant_id": "merchant_target",
             "ip": "10.0.0.1", "country": "IN",
             "tx_count_1min": 8, "v14": -4.5
+        }
+    
+    if darkweb_btn:
+        st.session_state["quick_tx"] = {
+            "amount": 4999.99, "hour": 3,
+            "card_id": "card_darkweb_001",
+            "country": "RU", "ip": "10.55.0.1",
+            "v14": -9.2, "v12": -5.1,
+            "tx_count_1min": 1
+        }
+    if testing_btn:
+        st.session_state["quick_tx"] = {
+            "amount": 0.01, "hour": 4,
+            "card_id": "card_test_burst",
+            "country": "NG", "ip": "10.22.0.1",
+            "v14": -3.5, "tx_count_1min": 12
         }
 
     st.divider()
