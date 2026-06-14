@@ -11,6 +11,8 @@
 
 👉 **[Try Live Demo](https://ai-fraud-de-kqninmrvd7glvcfzwzbh2l.streamlit.app/)**
 🐙 **[GitHub](https://github.com/rmanojgowda/fraudshield-ai-agent)**
+## 🎬 Demo Video
+👉 [Watch Demo on YouTube](https://youtu.be/P6GkCLSe4eI?si=w1hL2Rv2q20wUhQN)
 
 
 ## 🎬 Screenshots
